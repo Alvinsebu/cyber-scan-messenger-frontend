@@ -55,7 +55,7 @@ export default function Register() {
             className="text-center text-4xl font-bold mb-4"
             style={{ fontFamily: "'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif" }}
           >
-            Instagram
+            CyberScan
           </h1>
 
           <p className="text-center text-gray-500 text-sm font-semibold mb-4">

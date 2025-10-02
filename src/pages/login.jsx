@@ -54,7 +54,7 @@ export default function Login() {
         {/* Instagram Logo */}
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold italic font-serif text-gray-800 select-none">
-            Instagram
+            CyberScan
           </h1>
         </div>
 
@@ -111,7 +111,7 @@ export default function Login() {
           <p className="text-sm text-gray-800">
             Don&apos;t have an account?{" "}
              <Link to="/register" className="text-[#0095F6] font-semibold hover:underline">
-              Log in
+              Register
             </Link>
           </p>
         </div>
