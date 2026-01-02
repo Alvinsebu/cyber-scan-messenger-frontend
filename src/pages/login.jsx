@@ -1,12 +1,17 @@
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../authContext";
+import { LOGIN_URL } from "../config";
 import { Link } from "react-router-dom";
 import Toast from "../components/toast";
 
 export default function Login() {
-  const [formData, setFormData] = useState({ username: "", password: "" });
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [isLoading, setIsLoading] = useState(false);
   const [toast, setToast] = useState(null);
+  const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -15,22 +20,47 @@ export default function Login() {
 
   const showToast = (message, type) => {
     setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
-    if (!formData.username || !formData.password) {
+    if (!formData.email || !formData.password) {
       showToast("Please fill in all fields", "error");
       setIsLoading(false);
       return;
     }
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      showToast("Login successful!", "success");
-      console.log("Login attempt:", formData);
+      const response = await fetch(LOGIN_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMsg = errorData.message || "Login failed. Please try again.";
+        showToast(errorMsg, "error");
+      } else {
+        const data = await response.json();
+        // Only store the required fields
+        login({
+          email: data.email,
+          access_token: data.access_token,
+          refresh_token: data.refresh_token,
+          username: data.username,
+        });
+        showToast("Login successful!", "success");
+        setTimeout(() => navigate("/feeds"), 1000);
+      }
     } catch (error) {
       showToast("Login failed. Please try again.", "error");
     } finally {
@@ -62,10 +92,10 @@ export default function Login() {
         <form onSubmit={handleSubmit} className="space-y-3">
           <input
             type="text"
-            name="username"
-            value={formData.username}
+            name="email"
+            value={formData.email}
             onChange={handleInputChange}
-            placeholder="Phone number, username, or email"
+            placeholder="Email"
             disabled={isLoading}
             className="w-full border border-gray-300 rounded-sm bg-gray-50 px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-gray-400"
           />

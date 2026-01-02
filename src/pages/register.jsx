@@ -1,9 +1,12 @@
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import Toast from "../components/toast";
+import { REGISTER_URL } from "../config";
 
 export default function Register() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: "",
     fullName: "",
@@ -34,9 +37,27 @@ export default function Register() {
     }
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      showToast("Signup successful!", "success");
-      console.log("Signup attempt:", formData);
+      const response = await fetch(REGISTER_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: formData.username,
+          password: formData.password,
+          email: formData.email,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMsg = errorData.message || "Signup failed. Please try again.";
+        showToast(errorMsg, "error");
+      } else {
+        showToast("Signup successful!", "success");
+        setTimeout(() => navigate("/login"), 1000);
+        // Optionally, redirect or clear form here
+      }
     } catch (error) {
       showToast("Signup failed. Please try again.", "error");
     } finally {

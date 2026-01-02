@@ -1,5 +1,8 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { UPLOAD_IMAGE_URL, POSTS_RANDOM_URL, API_BASE_URL } from '../config';
+import { useAuth } from '../authContext';
 import { Gi3dMeeple } from "react-icons/gi";
 import { BsChatDots } from "react-icons/bs";
 import { IoShareOutline } from "react-icons/io5";
@@ -8,91 +11,246 @@ import { BsChatFill } from "react-icons/bs";
 import { IoMdSend } from "react-icons/io";
 
 const Feed = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth ? useAuth() : { user: null };
+    // Redirect to login if not signed in
+    useEffect(() => {
+      if (!user) {
+        navigate('/login', { replace: true });
+      }
+    }, [user, navigate]);
   const [posts, setPosts] = useState([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [newPost, setNewPost] = useState('');
   const [newImage, setNewImage] = useState(null);
-  const [newDescription, setNewDescription] = useState('');
-  const [comments, setComments] = useState({});
+  // Removed newDescription, not needed
+  const [comments, setComments] = useState({}); // { [postId]: [ ... ] }
+  const [commentsLoading, setCommentsLoading] = useState({}); // { [postId]: boolean }
   const [newComment, setNewComment] = useState({});
   const [showComments, setShowComments] = useState({});
   const [showEmojis, setShowEmojis] = useState({});
   const fileInputRef = useRef(null);
+  const observer = useRef();
 
   const emojis = ['😀', '😂', '😍', '👍', '❤️', '😢', '😮', '😡'];
 
-  useEffect(() => {
-    setPosts([
-      {
-        id: 1,
-        author: 'john_doe',
-        // avatar: 'https://via.placeholder.com/32',
-        content: 'Beautiful sunset today! 🌅',
-        image: 'https://via.placeholder.com/600x400',
-        timestamp: '2h ago',
-        likes: 24
-      },
-      {
-        id: 2,
-        author: 'jane_smith',
-        // avatar: 'https://via.placeholder.com/32',
-        content: 'Coffee and code ☕️',
-        timestamp: '4h ago',
-        likes: 12
+
+  // Helper to get access token
+  const getAccessToken = () => {
+    let accessToken = user?.access_token;
+    if (!accessToken) {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        try {
+          accessToken = JSON.parse(storedUser).access_token;
+        } catch {
+          console.error('Failed to parse stored user data');
+        }
       }
-    ]);
-    setComments({
-      1: [{ user: 'alice', text: 'Amazing shot!' }],
-      2: [{ user: 'bob', text: 'Perfect combo!' }]
+    }
+    return accessToken;
+  };
+
+  const clearUserDataAndRedirect = () => {
+    localStorage.removeItem('user');
+    navigate('/login', { replace: true });
+  }
+
+  // Fetch posts from API
+  const fetchPosts = useCallback(async (pageNum = 1) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const accessToken = getAccessToken();
+      if (!accessToken) {
+       clearUserDataAndRedirect();
+       return;
+      }
+      const response = await fetch(`${POSTS_RANDOM_URL}?page=${pageNum}&per_page=10`, {
+        headers: {
+        'Authorization': `Bearer ${accessToken}`
+        }
+      });
+      if (!response.ok) throw new Error('Failed to fetch posts');
+      const data = await response.json();
+      // API returns { current_page, pages, posts, total }
+      setPosts(prev => pageNum === 1 ? data.posts : [...prev, ...data.posts]);
+      setHasMore(data.current_page < data.pages);
+    } catch (err) {
+      setError('Failed to load posts');
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  // Initial load and on page change
+  useEffect(() => {
+    fetchPosts(page);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
+  // Infinite scroll observer
+  const lastPostRef = useCallback(node => {
+    if (loading) return;
+    if (observer.current) observer.current.disconnect();
+    observer.current = new window.IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        setPage(prev => prev + 1);
+      }
     });
-  }, []);
+    if (node) observer.current.observe(node);
+  }, [loading, hasMore]);
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => setNewImage(e.target.result);
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      alert('Only png, jpg, jpeg, and gif images are supported.');
+      return;
+    }
+
+    // Prepare form data
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      // Get access token from context or localStorage
+      let accessToken = user?.access_token;
+      if (!accessToken) {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          try {
+            accessToken = JSON.parse(storedUser).access_token;
+          } catch {}
+        }
+      }
+      if (!accessToken) {
+        clearUserDataAndRedirect();
+        return;
+      }
+      const response = await fetch(UPLOAD_IMAGE_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        },
+        body: formData
+      });
+      if (!response.ok) throw new Error('Image upload failed');
+      const data = await response.json();
+      setNewImage(data.url);
+    } catch (err) {
+      alert('Image upload failed.');
+      setNewImage(null);
     }
   };
 
-  const handlePostSubmit = (e) => {
+  const handlePostSubmit = async (e) => {
     e.preventDefault();
-    if (!newPost.trim() && !newImage) return;
+    if (!newPost.trim()) {
+      alert('Content is required.');
+      return;
+    }
 
-    const post = {
-      id: posts.length + 1,
-      author: 'Alvin',
-      // avatar: 'https://via.placeholder.com/32',
-      content: newPost,
-      image: newImage,
-      description: newDescription,
-      timestamp: 'Just now',
-      likes: 0
-    };
+    // Only allow supported image types
+    if (newImage && !/\.(jpg|jpeg|png|gif)$/i.test(newImage)) {
+      alert('Only jpg, jpeg, png, gif images are supported.');
+      return;
+    }
 
-    setPosts([post, ...posts]);
-    setNewPost('');
-    setNewImage(null);
-    setNewDescription('');
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+    const accessToken = getAccessToken();
+    if (!accessToken) {
+      clearUserDataAndRedirect();
+      return;
+    }
+    try {
+      const response = await fetch(`${API_BASE_URL}/post`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+         'Authorization': `Bearer ${accessToken}`
+        },
+        body: JSON.stringify({
+          content: newPost,
+          url: newImage || undefined
+        })
+      });
+      if (!response.ok) throw new Error('Failed to post content');
+      // Optionally, you can fetch the new feed or prepend the new post
+      setNewPost('');
+      setNewImage(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      setPage(1); // reload feed from first page
+    } catch (err) {
+      alert('Failed to post content.');
     }
   };
 
-  const handleCommentSubmit = (postId, e) => {
+  // Fetch comments for a post
+  const fetchComments = async (postId) => {
+    setCommentsLoading(prev => ({ ...prev, [postId]: true }));
+    const accessToken = getAccessToken();
+    if (!accessToken) {
+      clearUserDataAndRedirect();
+      return;
+    }
+    try {
+      const response = await fetch(`${API_BASE_URL}/comments/${postId}`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      });
+      if (!response.ok) throw new Error('Failed to fetch comments');
+      const data = await response.json();
+      // API returns an array of comments
+      setComments(prev => ({ ...prev, [postId]: Array.isArray(data) ? data : [] }));
+    } catch (err) {
+      setComments(prev => ({ ...prev, [postId]: [] }));
+    } finally {
+      setCommentsLoading(prev => ({ ...prev, [postId]: false }));
+    }
+  };
+
+  const handleCommentSubmit = async (postId, e) => {
     e.preventDefault();
     const commentText = newComment[postId];
     if (!commentText?.trim()) return;
 
-    setComments(prev => ({
-      ...prev,
-      [postId]: [...(prev[postId] || []), { user: 'Alvin', text: commentText }]
-    }));
-    setNewComment(prev => ({ ...prev, [postId]: '' }));
+    const accessToken = getAccessToken();
+    if (!accessToken) {
+      clearUserDataAndRedirect();
+      return;
+    }
+    try {
+      const response = await fetch(`${API_BASE_URL}/comment/${postId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
+        body: JSON.stringify({ content: commentText })
+      });
+      if (!response.ok) throw new Error('Failed to post comment');
+      setNewComment(prev => ({ ...prev, [postId]: '' }));
+      // Fetch updated comments after posting
+      fetchComments(postId);
+    } catch (err) {
+      alert('Failed to post comment.');
+    }
   };
 
   const toggleComments = (postId) => {
-    setShowComments(prev => ({ ...prev, [postId]: !prev[postId] }));
+    setShowComments(prev => {
+      const willShow = !prev[postId];
+      if (willShow && !comments[postId]) {
+        fetchComments(postId);
+      }
+      return { ...prev, [postId]: willShow };
+    });
   };
 
   const toggleEmojis = (postId) => {
@@ -115,8 +273,32 @@ const Feed = () => {
         <div className="flex items-center gap-4">
           <span className="text-sm font-medium text-gray-800">Alvin</span>
           <BsChatDots className="text-xl hover:text-gray-600" />
-           <button className="text-sm hover:text-gray-600">
-            <IoMdPower className="text-xl hover:text-gray-600"/></button>
+           <button
+             className="text-sm hover:text-gray-600"
+             onClick={async () => {
+               const storedUser = localStorage.getItem('user');
+               let refreshToken = null;
+               if (storedUser) {
+                 try {
+                   refreshToken = JSON.parse(storedUser).refresh_token;
+                 } catch {}
+               }
+               if (refreshToken) {
+                 try {
+                   await fetch('http://localhost:5000/api/logout', {
+                     method: 'POST',
+                     headers: {
+                       'Authorization': `Bearer ${refreshToken}`
+                     }
+                   });
+                 } catch {}
+               }
+               localStorage.removeItem('user');
+               navigate('/login', { replace: true });
+             }}
+           >
+            <IoMdPower className="text-xl hover:text-gray-600"/>
+           </button>
         </div>
       </nav>
       
@@ -125,73 +307,91 @@ const Feed = () => {
           <form onSubmit={handlePostSubmit}>
             <textarea
               className="w-full h-[60px] p-2.5 border-none resize-none text-sm focus:outline-none"
-              placeholder={newPost ? "What's on your mind?" : "Select file to upload"}
+              placeholder="What's on your mind?"
               value={newPost}
               onChange={(e) => setNewPost(e.target.value)}
+              required
             />
             <input
               ref={fileInputRef}
               className="my-2.5"
               type="file"
-              accept="image/*"
+              accept="image/png,image/jpeg,image/jpg,image/gif"
               onChange={handleImageChange}
             />
             {newImage && (
               <div className="relative">
                 <img src={newImage} alt="Preview" className="w-full max-w-md max-h-80 object-cover aspect-square mt-2.5 mx-auto" />
-                <button 
-                  className="absolute bottom-4 right-4 bg-white hover:bg-gray-100 p-2 rounded-full shadow-md" 
-                  type="submit"
-                >
-                  <IoShareOutline className="text-lg" />
-                </button>
-                <input
-                  className="w-full mt-2 p-2 text-sm focus:outline-none"
-                  placeholder="Add a description..."
-                  value={newDescription}
-                  onChange={(e) => setNewDescription(e.target.value)}
-                />
               </div>
             )}
-            {!newImage && (
-              <div className="flex justify-end">
-                <button className="bg-red-500 hover:bg-black-600 text-white px-4 py-2 border-none rounded cursor-pointer font-semibold" type="submit"> <IoShareOutline className="text-lg" /></button>
-              </div>
-            )}
+            <div className="flex justify-end mt-2">
+              <button
+                className="bg-red-500 hover:bg-black-600 text-white px-4 py-2 border-none rounded cursor-pointer font-semibold"
+                type="submit"
+                disabled={!newPost.trim()}
+                title={!newPost.trim() ? 'Content is required' : 'Post'}
+              >
+                <IoShareOutline className="text-lg" />
+              </button>
+            </div>
           </form>
         </div>
 
-        {posts.map(post => (
-          <div key={post.id} className="bg-white border border-gray-300 rounded-lg mb-5 shadow-md">
+        {posts.map((post, idx) => {
+          const isLast = idx === posts.length - 1;
+          return (
+            <div
+              key={post.id}
+              className="bg-white border border-gray-300 rounded-lg mb-5 shadow-md"
+              ref={isLast ? lastPostRef : undefined}
+            >
             <div className="flex items-center p-4">
-              <img className="w-8 h-8 rounded-full mr-2.5" alt={post.author} />
+              <img
+                className="w-8 h-8 rounded-full mr-2.5"
+                src="https://ui-avatars.com/api/?background=random&size=32&name=User"
+                alt="User avatar"
+              />
               <div>
-                <h4 className="m-0 text-sm font-semibold">{post.author}</h4>
-                <p className="m-0 text-gray-500 text-xs">{post.timestamp}</p>
+                <h4 className="m-0 text-sm font-semibold">{post.username || 'User'}</h4>
+                {/* Optionally show timestamp if available */}
               </div>
             </div>
             
-            {post.image && <img className="w-full max-w-md max-h-80 object-cover aspect-square block mx-auto" src={post.image} alt="Post" />}
-            
+            {(post.image || post.url) && (
+              <img
+                className="w-full max-w-md max-h-80 object-cover aspect-square block mx-auto"
+                src={post.image || post.url}
+                alt="Post"
+              />
+            )}
+            {post.content && <div className="px-4 text-sm leading-relaxed">{post.content}</div>}
             <div className="px-4 pb-2.5 flex gap-4">
               <button 
                 className="bg-none border-none cursor-pointer text-sm text-gray-800 py-2 mt-2 mb-2"
                 onClick={() => toggleComments(post.id)}
               >
-                <BsChatFill className="inline mr-1" /> {comments[post.id]?.length || 0} Comments
+                <BsChatFill className="inline mr-1" /> Comments
               </button>
             </div>
             
-            {post.content && <div className="px-4 text-sm leading-relaxed">{post.content}</div>}
-            {post.description && <div className="px-4 text-sm leading-relaxed text-gray-600 mb-2 pb-2">{post.description}</div>}
-            
             {showComments[post.id] && (
               <div className="px-4 pb-4 mt-4 mb-4">
-                {comments[post.id]?.map((comment, idx) => (
-                  <div key={idx} className="mb-2 text-sm">
-                    <strong>{comment.user}</strong> {comment.text}
-                  </div>
-                ))}
+                {commentsLoading[post.id] ? (
+                  <div className="text-gray-500 text-sm mb-2">Loading comments...</div>
+                ) : (
+                  comments[post.id]?.length > 0 ? (
+                    comments[post.id].map((comment, idx) => (
+                      <div key={idx} className={`mb-2 text-sm ${comment.is_bullying ? 'bg-red-100' : ''} rounded p-1` }>
+                        <strong>{comment.username || 'User'}</strong> {comment.content}
+                        {comment.is_bullying && (
+                          <span className="ml-2 text-xs text-red-500 font-semibold">Bullying</span>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-gray-400 text-sm mb-2">No comments yet.</div>
+                  )
+                )}
                 <div className="mt-3 mb-3">
                   <form onSubmit={(e) => handleCommentSubmit(post.id, e)} className="flex gap-2 items-center">
                     <div className="flex-1 relative">
@@ -236,7 +436,17 @@ const Feed = () => {
               </div>
             )}
           </div>
-        ))}
+          );
+        })}
+        {loading && (
+          <div className="text-center text-gray-500 py-4">Loading...</div>
+        )}
+        {error && (
+          <div className="text-center text-red-500 py-4">{error}</div>
+        )}
+        {!hasMore && !loading && posts.length > 0 && (
+          <div className="text-center text-gray-400 py-4">No more posts to show.</div>
+        )}
       </div>
     </>
   );
