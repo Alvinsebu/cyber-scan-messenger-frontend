@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UPLOAD_IMAGE_URL, POSTS_RANDOM_URL, API_BASE_URL } from '../config';
+import { UPLOAD_IMAGE_URL, POSTS_RANDOM_URL, API_BASE_URL, ADMIN_EMAILS } from '../config';
 import { useAuth } from '../authContext';
 import { Gi3dMeeple } from "react-icons/gi";
 import { BsChatDots } from "react-icons/bs";
@@ -9,6 +9,8 @@ import { IoShareOutline } from "react-icons/io5";
 import { IoMdPower } from "react-icons/io";
 import { BsChatFill } from "react-icons/bs";
 import { IoMdSend } from "react-icons/io";
+import { IoEye, IoEyeOff } from "react-icons/io5";
+import Toast from '../components/toast';
 
 const Feed = () => {
   const navigate = useNavigate();
@@ -32,6 +34,8 @@ const Feed = () => {
   const [newComment, setNewComment] = useState({});
   const [showComments, setShowComments] = useState({});
   const [showEmojis, setShowEmojis] = useState({});
+  const [showBullyingComments, setShowBullyingComments] = useState({}); // { 'postId-commentIdx': boolean }
+  const [toast, setToast] = useState(null);
   const fileInputRef = useRef(null);
   const observer = useRef();
 
@@ -180,11 +184,13 @@ const Feed = () => {
         })
       });
       if (!response.ok) throw new Error('Failed to post content');
-      // Optionally, you can fetch the new feed or prepend the new post
+      // Clear form
       setNewPost('');
       setNewImage(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
-      setPage(1); // reload feed from first page
+      // Fetch posts again to show the new post
+      setPage(1);
+      fetchPosts(1);
     } catch (err) {
       alert('Failed to post content.');
     }
@@ -234,12 +240,19 @@ const Feed = () => {
         },
         body: JSON.stringify({ content: commentText })
       });
-      if (!response.ok) throw new Error('Failed to post comment');
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        console.log('Error response data:', data);
+        throw new Error(data.msg || 'Failed to post comment');
+      }
+      
       setNewComment(prev => ({ ...prev, [postId]: '' }));
       // Fetch updated comments after posting
       fetchComments(postId);
     } catch (err) {
-      alert('Failed to post comment.');
+      setToast({ message: err.message || 'Failed to post comment.', type: 'error' });
     }
   };
 
@@ -262,8 +275,20 @@ const Feed = () => {
     setShowEmojis(prev => ({ ...prev, [postId]: false }));
   };
 
+  const toggleBullyingComment = (postId, commentIdx) => {
+    const key = `${postId}-${commentIdx}`;
+    setShowBullyingComments(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
   return (
     <>
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
       <nav className="bg-white border-b border-gray-300 px-5 py-2.5 fixed top-0 w-full z-50 flex justify-between items-center shadow-md">
         <div className="flex items-center gap-4">
           <button className="text-2xl hover:text-gray-600">
@@ -271,7 +296,15 @@ const Feed = () => {
           <h1 className="m-0 text-2xl text-gray-800">CYBERSCAN</h1>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-sm font-medium text-gray-800">Alvin</span>
+          <span className="text-sm font-medium text-gray-800">{user?.username || 'User'}</span>
+          {user?.email && ADMIN_EMAILS.includes(user.email) && (
+            <button
+              onClick={() => navigate('/admin')}
+              className="px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition-colors"
+            >
+              Admin
+            </button>
+          )}
           <BsChatDots className="text-xl hover:text-gray-600" />
            <button
              className="text-sm hover:text-gray-600"
@@ -380,14 +413,35 @@ const Feed = () => {
                   <div className="text-gray-500 text-sm mb-2">Loading comments...</div>
                 ) : (
                   comments[post.id]?.length > 0 ? (
-                    comments[post.id].map((comment, idx) => (
-                      <div key={idx} className={`mb-2 text-sm ${comment.is_bullying ? 'bg-red-100' : ''} rounded p-1` }>
-                        <strong>{comment.username || 'User'}</strong> {comment.content}
-                        {comment.is_bullying && (
-                          <span className="ml-2 text-xs text-red-500 font-semibold">Bullying</span>
-                        )}
-                      </div>
-                    ))
+                    comments[post.id].map((comment, idx) => {
+                      const commentKey = `${post.id}-${idx}`;
+                      const isVisible = showBullyingComments[commentKey];
+                      
+                      return (
+                        <div key={idx} className={`mb-2 text-sm ${comment.is_bullying ? 'bg-red-50 border border-red-200' : ''} rounded p-2 flex justify-between items-start gap-2`}>
+                          <div className="flex-1">
+                            <strong>{comment.username || 'User'}</strong>
+                            <span className="ml-3">
+                              {comment.is_bullying && !isVisible ? (
+                                <span className="text-red-600 italic">******* hidden due to toxic comment *******</span>
+                              ) : (
+                                <span>{comment.content}</span>
+                              )}
+                            </span>
+                          </div>
+                          {comment.is_bullying && (
+                            <button
+                              type="button"
+                              onClick={() => toggleBullyingComment(post.id, idx)}
+                              className="text-red-500 hover:text-red-700 transition-colors p-1"
+                              title={isVisible ? 'Hide comment' : 'Show comment'}
+                            >
+                              {isVisible ? <IoEyeOff size={18} /> : <IoEye size={18} />}
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })
                   ) : (
                     <div className="text-gray-400 text-sm mb-2">No comments yet.</div>
                   )
@@ -411,7 +465,7 @@ const Feed = () => {
                     </div>
                     <button 
                       type="submit"
-                      className="bg-blue-200 hover:bg-black-100 text-white px-4 py-2 rounded-full text-sm"
+                      className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-full text-sm"
                     >
                       <IoMdSend />
                     </button>
