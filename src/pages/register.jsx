@@ -9,7 +9,6 @@ export default function Register() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: "",
-    fullName: "",
     username: "",
     password: "",
   });
@@ -30,7 +29,7 @@ export default function Register() {
     e.preventDefault();
     setIsLoading(true);
 
-    if (!formData.email || !formData.fullName || !formData.username || !formData.password) {
+    if (!formData.email || !formData.username || !formData.password) {
       showToast("Please fill in all fields", "error");
       setIsLoading(false);
       return;
@@ -66,39 +65,30 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen w-full bg-gradient-to-br from-emerald-50 via-teal-100 to-cyan-200 flex items-center justify-center px-4 py-8">
       {toast && <Toast message={toast.message} type={toast.type} />}
 
       <div className="flex flex-col md:flex-row items-center justify-center w-full max-w-4xl px-4">
         {/* Signup box */}
-        <div className="w-full max-w-sm bg-white border border-gray-300 p-8 rounded-sm">
+        <div className="w-full max-w-sm bg-white/95 backdrop-blur-sm border border-gray-200 p-8 rounded-2xl shadow-xl">
           <h1
-            className="text-center text-4xl font-bold mb-4"
-            style={{ fontFamily: "'Proxima Nova', 'Helvetica Neue', Helvetica, Arial, sans-serif" }}
+            className="text-center text-4xl font-bold mb-2 text-emerald-600 italic font-serif"
           >
             CyberScan
           </h1>
 
-          <p className="text-center text-gray-500 text-sm font-semibold mb-4">
-            Sign up to see photos and videos from your friends.
+          <p className="text-center text-gray-500 text-sm mb-6">
+            Sign up to connect with friends and share moments.
           </p>
 
-          <form className="space-y-2" onSubmit={handleSubmit}>
+          <form className="space-y-3" onSubmit={handleSubmit}>
             <input
               name="email"
               type="text"
               value={formData.email}
               onChange={handleInputChange}
-              placeholder="email"
-              className="w-full p-2 border border-gray-300 rounded-sm bg-gray-50 focus:outline-none focus:border-gray-400 text-sm"
-            />
-            <input
-              name="fullName"
-              type="text"
-              value={formData.fullName}
-              onChange={handleInputChange}
-              placeholder="Full Name"
-              className="w-full p-2 border border-gray-300 rounded-sm bg-gray-50 focus:outline-none focus:border-gray-400 text-sm"
+              placeholder="Email"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-transparent text-sm transition-all"
             />
             <input
               name="username"
@@ -106,7 +96,7 @@ export default function Register() {
               value={formData.username}
               onChange={handleInputChange}
               placeholder="Username"
-              className="w-full p-2 border border-gray-300 rounded-sm bg-gray-50 focus:outline-none focus:border-gray-400 text-sm"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-transparent text-sm transition-all"
             />
             <input
               name="password"
@@ -114,13 +104,13 @@ export default function Register() {
               value={formData.password}
               onChange={handleInputChange}
               placeholder="Password"
-              className="w-full p-2 border border-gray-300 rounded-sm bg-gray-50 focus:outline-none focus:border-gray-400 text-sm"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-transparent text-sm transition-all"
             />
 
             <button
               type="submit"
               disabled={isLoading}
-              className={`w-full bg-[#0095F6] text-white font-semibold py-1.5 rounded-sm hover:bg-[#1877f2] text-sm ${
+              className={`w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold py-3 rounded-xl text-sm shadow-lg shadow-emerald-200 transition-all duration-300 mt-2 ${
                 isLoading ? "opacity-50 cursor-not-allowed" : ""
               }`}
             >
@@ -134,9 +124,9 @@ export default function Register() {
             <div className="flex-grow h-px bg-gray-300"></div>
           </div>
 
-          <p className="text-center text-sm mt-4">
+          <p className="text-center text-sm mt-4 text-gray-700">
             Have an account?{" "}
-            <Link to="/login" className="text-[#0095F6] font-semibold hover:underline">
+            <Link to="/login" className="text-emerald-600 font-semibold hover:text-emerald-700 hover:underline">
               Log in
             </Link>
           </p>

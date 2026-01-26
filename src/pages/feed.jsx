@@ -308,7 +308,7 @@ const Feed = () => {
   };
 
   return (
-    <>
+    <div className="min-h-screen w-full bg-gradient-to-br from-emerald-50 via-teal-100 to-cyan-200">
       {toast && (
         <Toast
           message={toast.message}
@@ -316,7 +316,7 @@ const Feed = () => {
           onClose={() => setToast(null)}
         />
       )}
-      <nav className="bg-white border-b border-gray-300 px-5 py-2.5 fixed top-0 w-full z-50 flex justify-between items-center shadow-md">
+      <nav className="bg-white/95 backdrop-blur-sm border-b border-gray-200 px-5 py-2.5 fixed top-0 w-full z-50 flex justify-between items-center shadow-md">
         <div className="flex items-center gap-4">
           <button className="text-2xl hover:text-gray-600">
             <Gi3dMeeple /></button>
@@ -362,7 +362,7 @@ const Feed = () => {
       </nav>
       
       <div className="max-w-2xl mx-auto mt-16 p-5">
-        <div className="bg-white border border-gray-300 rounded-lg p-4 mb-5 shadow-md">
+        <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-lg p-4 mb-5 shadow-md">
           <form onSubmit={handlePostSubmit}>
             <textarea
               className="w-full h-[60px] p-2.5 border-none resize-none text-sm focus:outline-none"
@@ -401,7 +401,7 @@ const Feed = () => {
           return (
             <div
               key={post.id}
-              className="bg-white border border-gray-300 rounded-lg mb-5 shadow-md"
+              className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-lg mb-5 shadow-md"
               ref={isLast ? lastPostRef : undefined}
             >
             <div className="flex items-center p-4">
@@ -434,77 +434,122 @@ const Feed = () => {
             </div>
             
             {showComments[post.id] && (
-              <div className="px-4 pb-4 mt-4 mb-4">
-                {commentsLoading[post.id] ? (
-                  <div className="text-gray-500 text-sm mb-2">Loading comments...</div>
-                ) : (
-                  comments[post.id]?.length > 0 ? (
-                    comments[post.id].map((comment, idx) => {
-                      const commentKey = `${post.id}-${idx}`;
-                      const isVisible = showBullyingComments[commentKey];
-                      
-                      return (
-                        <div key={idx} className={`mb-2 text-sm ${comment.is_bullying ? 'bg-red-50 border border-red-200' : ''} rounded p-2 flex justify-between items-start gap-2`}>
-                          <div className="flex-1">
-                            <strong>{comment.username || 'User'}</strong>
-                            <span className="ml-3">
-                              {comment.is_bullying && !isVisible ? (
-                                <span className="text-red-600 italic">******* hidden due to toxic comment *******</span>
-                              ) : (
-                                <span>{comment.content}</span>
-                              )}
-                            </span>
-                          </div>
-                          {comment.is_bullying && (
-                            <button
-                              type="button"
-                              onClick={() => toggleBullyingComment(post.id, idx)}
-                              className="text-red-500 hover:text-red-700 transition-colors p-1"
-                              title={isVisible ? 'Hide comment' : 'Show comment'}
-                            >
-                              {isVisible ? <IoEyeOff size={18} /> : <IoEye size={18} />}
-                            </button>
-                          )}
-                        </div>
-                      );
-                    })
+              <div className="border-t border-gray-200 bg-gradient-to-b from-gray-50/80 to-white/60">
+                {/* Comments Header */}
+                <div className="px-4 py-3 border-b border-gray-100">
+                  <h5 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                    <BsChatFill className="text-emerald-500" />
+                    Comments ({comments[post.id]?.length || 0})
+                  </h5>
+                </div>
+                
+                {/* Comments List */}
+                <div className="px-4 py-3 max-h-64 overflow-y-auto">
+                  {commentsLoading[post.id] ? (
+                    <div className="flex items-center justify-center py-4">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-500"></div>
+                      <span className="ml-2 text-gray-500 text-sm">Loading comments...</span>
+                    </div>
                   ) : (
-                    <div className="text-gray-400 text-sm mb-2">No comments yet.</div>
-                  )
-                )}
-                <div className="mt-3 mb-3">
+                    comments[post.id]?.length > 0 ? (
+                      <div className="space-y-3">
+                        {comments[post.id].map((comment, idx) => {
+                          const commentKey = `${post.id}-${idx}`;
+                          const isVisible = showBullyingComments[commentKey];
+                          
+                          return (
+                            <div 
+                              key={idx} 
+                              className={`flex items-start gap-3 p-3 rounded-xl transition-all ${
+                                comment.is_bullying 
+                                  ? 'bg-red-50/80 border border-red-200 shadow-sm' 
+                                  : 'bg-white/70 border border-gray-100 hover:bg-white hover:shadow-sm'
+                              }`}
+                            >
+                              <img
+                                className="w-8 h-8 rounded-full flex-shrink-0"
+                                src={`https://ui-avatars.com/api/?background=10b981&color=fff&size=32&name=${comment.username || 'User'}`}
+                                alt="Avatar"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-semibold text-sm text-gray-800">{comment.username || 'User'}</span>
+                                  {comment.is_bullying && (
+                                    <span className="px-2 py-0.5 bg-red-100 text-red-600 text-xs rounded-full font-medium">
+                                      Flagged
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-sm text-gray-600 mt-1 break-words">
+                                  {comment.is_bullying && !isVisible ? (
+                                    <span className="text-red-500 italic text-xs">⚠️ Content hidden due to policy violation</span>
+                                  ) : (
+                                    comment.content
+                                  )}
+                                </p>
+                              </div>
+                              {comment.is_bullying && (
+                                <button
+                                  type="button"
+                                  onClick={() => toggleBullyingComment(post.id, idx)}
+                                  className="flex-shrink-0 text-red-400 hover:text-red-600 transition-colors p-1.5 hover:bg-red-50 rounded-full"
+                                  title={isVisible ? 'Hide comment' : 'Show comment'}
+                                >
+                                  {isVisible ? <IoEyeOff size={18} /> : <IoEye size={18} />}
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-center py-6">
+                        <BsChatDots className="mx-auto text-3xl text-gray-300 mb-2" />
+                        <p className="text-gray-400 text-sm">No comments yet. Be the first to comment!</p>
+                      </div>
+                    )
+                  )}
+                </div>
+                
+                {/* Comment Input */}
+                <div className="px-4 py-3 border-t border-gray-100 bg-white/50">
                   <form onSubmit={(e) => handleCommentSubmit(post.id, e)} className="flex gap-2 items-center">
+                    <img
+                      className="w-8 h-8 rounded-full flex-shrink-0"
+                      src={`https://ui-avatars.com/api/?background=10b981&color=fff&size=32&name=${user?.username || 'User'}`}
+                      alt="Your avatar"
+                    />
                     <div className="flex-1 relative">
                       <input
-                        className="w-full border border-gray-300 rounded-full py-2.5 px-4 pr-12 text-sm focus:outline-none focus:border-blue-500"
-                        placeholder="Add a comment..."
+                        className="w-full border border-gray-200 rounded-full py-2.5 px-4 pr-12 text-sm bg-white/80 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-transparent transition-all"
+                        placeholder="Write a comment..."
                         value={newComment[post.id] || ''}
                         onChange={(e) => setNewComment(prev => ({ ...prev, [post.id]: e.target.value }))}
                       />
                       <button 
                         type="button"
                         onClick={() => toggleEmojis(post.id)}
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-lg hover:bg-gray-100 p-1 rounded-full"
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-lg hover:scale-110 transition-transform"
                       >
                         😊
                       </button>
                     </div>
                     <button 
                       type="submit"
-                      className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-full text-sm"
+                      className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white p-2.5 rounded-full shadow-md shadow-emerald-200 transition-all hover:shadow-lg"
                     >
-                      <IoMdSend />
+                      <IoMdSend size={18} />
                     </button>
                   </form>
                   {showEmojis[post.id] && (
-                    <div className="mt-2 mb-2 p-3 border border-gray-200 rounded-lg bg-gray-50">
-                      <div className="flex flex-wrap gap-2">
+                    <div className="mt-3 p-3 border border-gray-200 rounded-xl bg-white/90 shadow-sm">
+                      <div className="flex flex-wrap gap-1">
                         {emojis.map((emoji, idx) => (
                           <button
                             key={idx}
                             type="button"
                             onClick={() => addEmoji(post.id, emoji)}
-                            className="text-xl hover:bg-gray-200 p-2 rounded-full"
+                            className="text-xl hover:bg-emerald-50 p-2 rounded-lg transition-colors hover:scale-110"
                           >
                             {emoji}
                           </button>
@@ -531,7 +576,7 @@ const Feed = () => {
 
       {/* Chat Component */}
       <Chat user={user} socket={socket} />
-    </>
+    </div>
   );
 };
 

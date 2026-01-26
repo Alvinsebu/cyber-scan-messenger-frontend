@@ -85,9 +85,9 @@ const Admin = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen w-full bg-gradient-to-br from-emerald-50 via-teal-100 to-cyan-200">
       {/* Header */}
-      <div className="bg-white shadow-md">
+      <div className="bg-white/95 backdrop-blur-sm shadow-md">
         <div className="px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
             <div className="flex items-center gap-3">
@@ -114,7 +114,7 @@ const Admin = () => {
       {/* Main Content */}
       <div className="px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Card */}
-        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 mb-4 sm:mb-6">
+        <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-md p-4 sm:p-6 mb-4 sm:mb-6">
           <div className="grid grid-cols-3 gap-2 sm:gap-4">
             <div className="text-center">
               <p className="text-gray-600 text-xs sm:text-sm">Total Users</p>
@@ -140,7 +140,7 @@ const Admin = () => {
         )}
 
         {/* Table */}
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-md overflow-hidden">
           {loading ? (
             <div className="flex justify-center items-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>

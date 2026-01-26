@@ -69,7 +69,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4">
+    <div className="min-h-screen w-full bg-gradient-to-br from-emerald-50 via-teal-100 to-cyan-200 flex flex-col items-center justify-center px-4 py-8">
       {/* Toast */}
       {toast && (
         <Toast
@@ -80,24 +80,25 @@ export default function Login() {
       )}
 
       {/* Login Card */}
-      <div className="w-full max-w-sm bg-white border border-gray-300 rounded-sm shadow-sm p-10">
-        {/* Instagram Logo */}
+      <div className="w-full max-w-sm bg-white/95 backdrop-blur-sm border border-gray-200 rounded-2xl shadow-xl p-10">
+        {/* Logo */}
         <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold italic font-serif text-gray-800 select-none">
+          <h1 className="text-5xl font-bold italic font-serif text-emerald-600 select-none">
             CyberScan
           </h1>
+          <p className="text-gray-500 text-sm mt-2">Connect with friends and share moments</p>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <input
-            type="text"
+            type="email"
             name="email"
             value={formData.email}
             onChange={handleInputChange}
             placeholder="Email"
             disabled={isLoading}
-            className="w-full border border-gray-300 rounded-sm bg-gray-50 px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-gray-400"
+            className="w-full border border-gray-200 rounded-xl bg-gray-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-transparent transition-all"
           />
           <input
             type="password"
@@ -106,13 +107,13 @@ export default function Login() {
             onChange={handleInputChange}
             placeholder="Password"
             disabled={isLoading}
-            className="w-full border border-gray-300 rounded-sm bg-gray-50 px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-gray-400"
+            className="w-full border border-gray-200 rounded-xl bg-gray-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-transparent transition-all"
           />
           {/* Button */}
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg text-sm font-semibold mt-4 disabled:opacity-50"
+            className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white py-3 rounded-xl text-sm font-semibold mt-4 disabled:opacity-50 shadow-lg shadow-emerald-200 transition-all duration-300"
           >
             {isLoading ? "Logging in..." : "Log in"}
           </button>
@@ -128,8 +129,8 @@ export default function Login() {
         </div>
 
         {/* Forgot Password */}
-        <div className="text-center mb-6">
-          <a href="#" className="text-xs text-blue-800 hover:underline">
+        <div className="text-center mb-2">
+          <a href="#" className="text-sm text-emerald-600 hover:text-emerald-700 hover:underline">
             Forgot password?
           </a>
         </div>
@@ -137,11 +138,11 @@ export default function Login() {
 
       {/* Sign Up Link */}
       <div className="w-full max-w-sm mt-4">
-        <div className="border border-gray-300 rounded-sm bg-white p-6 text-center">
-          <p className="text-sm text-gray-800">
+        <div className="border border-gray-200 rounded-2xl bg-white/95 backdrop-blur-sm p-6 text-center shadow-lg">
+          <p className="text-sm text-gray-700">
             Don&apos;t have an account?{" "}
-             <Link to="/register" className="text-[#0095F6] font-semibold hover:underline">
-              Register
+             <Link to="/register" className="text-emerald-600 font-semibold hover:text-emerald-700 hover:underline">
+              Sign up
             </Link>
           </p>
         </div>
