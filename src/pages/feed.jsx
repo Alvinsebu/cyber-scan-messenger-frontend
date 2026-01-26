@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UPLOAD_IMAGE_URL, POSTS_RANDOM_URL, API_BASE_URL, ADMIN_EMAILS } from '../config';
+import { UPLOAD_IMAGE_URL, POSTS_RANDOM_URL, API_BASE_URL, ADMIN_EMAILS, SOCKET_SERVER_URL } from '../config';
 import { useAuth } from '../authContext';
 import { Gi3dMeeple } from "react-icons/gi";
 import { BsChatDots } from "react-icons/bs";
@@ -11,6 +11,8 @@ import { BsChatFill } from "react-icons/bs";
 import { IoMdSend } from "react-icons/io";
 import { IoEye, IoEyeOff } from "react-icons/io5";
 import Toast from '../components/toast';
+import Chat from '../components/chat';
+import io from 'socket.io-client';
 
 const Feed = () => {
   const navigate = useNavigate();
@@ -36,6 +38,7 @@ const Feed = () => {
   const [showEmojis, setShowEmojis] = useState({});
   const [showBullyingComments, setShowBullyingComments] = useState({}); // { 'postId-commentIdx': boolean }
   const [toast, setToast] = useState(null);
+  const [socket, setSocket] = useState(null);
   const fileInputRef = useRef(null);
   const observer = useRef();
 
@@ -95,6 +98,30 @@ const Feed = () => {
     fetchPosts(page);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
+
+  // Initialize Socket.IO connection
+  useEffect(() => {
+    if (!user?.username) return;
+
+    const newSocket = io(SOCKET_SERVER_URL, {
+      query: { username: user.username }
+    });
+
+    newSocket.on('connect', () => {
+      console.log('Connected to socket server');
+    });
+
+    newSocket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error);
+    });
+
+    setSocket(newSocket);
+
+    return () => {
+      newSocket.close();
+    };
+  }, [user]);
+  
   // Infinite scroll observer
   const lastPostRef = useCallback(node => {
     if (loading) return;
@@ -305,7 +332,6 @@ const Feed = () => {
               Admin
             </button>
           )}
-          <BsChatDots className="text-xl hover:text-gray-600" />
            <button
              className="text-sm hover:text-gray-600"
              onClick={async () => {
@@ -502,6 +528,9 @@ const Feed = () => {
           <div className="text-center text-gray-400 py-4">No more posts to show.</div>
         )}
       </div>
+
+      {/* Chat Component */}
+      <Chat user={user} socket={socket} />
     </>
   );
 };

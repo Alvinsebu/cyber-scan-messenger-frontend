@@ -156,7 +156,7 @@ const Admin = () => {
                 ) : (
                   <div className="divide-y divide-gray-200">
                     {users.map((user, index) => {
-                      const count = user.bullyinyCommentCount || 0;
+                      const count = user.bullyingCommentCount || 0;
                       const isBlocked = count > 5;
                       const statusColor = isBlocked ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800';
                       const statusText = isBlocked ? 'Blocked' : 'Open';
@@ -172,9 +172,19 @@ const Admin = () => {
                               {statusText}
                             </span>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-gray-600">Bullying Comments:</span>
-                            <span className="text-sm font-bold text-gray-900">{count}</span>
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-gray-600">Bullying Comments:</span>
+                              <span className="text-sm font-bold text-gray-900">{count}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-gray-600">Bullying Messages:</span>
+                              <span className="text-sm font-bold text-gray-900">{user.bullyingMessageCount || 0}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-gray-600">Total Bullying:</span>
+                              <span className="text-sm font-bold text-blue-600">{user.totalBullyingCount || 0}</span>
+                            </div>
                           </div>
                         </div>
                       );
@@ -198,6 +208,12 @@ const Admin = () => {
                         Bullying Comment Count
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Bullying Message Count
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Total Bullying Count
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Status
                       </th>
                     </tr>
@@ -205,13 +221,13 @@ const Admin = () => {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {users.length === 0 ? (
                       <tr>
-                        <td colSpan="4" className="px-6 py-8 text-center text-gray-500">
+                        <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
                           No users found
                         </td>
                       </tr>
                     ) : (
                       users.map((user, index) => {
-                        const count = user.bullyinyCommentCount || 0;
+                        const count = user.bullyingCommentCount || 0;
                         const isBlocked = count > 5;
                         const statusColor = isBlocked ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800';
                         const statusText = isBlocked ? 'Blocked' : 'Open';
@@ -229,6 +245,16 @@ const Admin = () => {
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="text-sm text-gray-900 font-semibold">
                                 {count}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-900 font-semibold">
+                                {user.bullyingMessageCount || 0}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-900 font-semibold">
+                                {user.totalBullyingCount || 0}
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">

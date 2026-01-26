@@ -89,7 +89,7 @@ export default function Register() {
               type="text"
               value={formData.email}
               onChange={handleInputChange}
-              placeholder="Mobile number or email"
+              placeholder="email"
               className="w-full p-2 border border-gray-300 rounded-sm bg-gray-50 focus:outline-none focus:border-gray-400 text-sm"
             />
             <input
