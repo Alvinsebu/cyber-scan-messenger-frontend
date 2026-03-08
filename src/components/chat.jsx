@@ -531,7 +531,14 @@ const Chat = ({ user, socket }) => {
                         }`}
                       >
                         <p className="text-sm break-words">
-                          {isBullying ? '******' : msg.message}
+                          {isBullying ? (
+  <div className="bg-red-50 border border-red-300 text-red-700 text-sm px-3 py-2 rounded-lg flex items-center gap-2 max-w-xs">
+    <span>⚠️</span>
+    <span>This message was removed because it violates community guidelines.</span>
+  </div>
+) : (
+  <p className="text-sm break-words">{msg.message}</p>
+)}
                         </p>
                         <p className={`text-xs mt-1 ${isOwn ? 'text-blue-100' : 'text-gray-400'}`}>
                           {new Date(msg.timestamp).toLocaleTimeString([], { 
