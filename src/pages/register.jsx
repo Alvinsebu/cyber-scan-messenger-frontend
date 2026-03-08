@@ -4,6 +4,18 @@ import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import Toast from "../components/toast";
 import { REGISTER_URL } from "../config";
+import { motion } from "framer-motion";
+import { Mail, Lock, Eye, EyeOff, Shield } from "lucide-react";
+
+// ── floating dot config ──────────────────────────────────────────
+const DOTS = [
+  { top: "15%", left: "10%", delay: 0 },
+  { top: "70%", left: "5%", delay: 0.8 },
+  { top: "30%", left: "88%", delay: 1.6 },
+  { top: "80%", left: "80%", delay: 0.4 },
+  { top: "50%", left: "50%", delay: 1.2 },
+  { top: "10%", left: "60%", delay: 2.0 },
+];
 
 export default function Register() {
   const navigate = useNavigate();
@@ -14,6 +26,7 @@ export default function Register() {
   });
   const [toast, setToast] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -55,7 +68,6 @@ export default function Register() {
       } else {
         showToast("Signup successful!", "success");
         setTimeout(() => navigate("/login"), 1000);
-        // Optionally, redirect or clear form here
       }
     } catch (error) {
       showToast("Signup failed. Please try again.", "error");
@@ -64,74 +76,370 @@ export default function Register() {
     }
   };
 
+  // ── input focus/blur helpers ────────────────────────────────
+  const handleFocus = (e) => {
+    e.target.style.borderColor = "hsl(180 100% 50% / 0.5)";
+    e.target.style.boxShadow = "0 0 0 2px hsl(180 100% 50% / 0.1)";
+    const icon = e.target.previousElementSibling;
+    if (icon) icon.style.color = "hsl(180 100% 60%)";
+  };
+  const handleBlur = (e) => {
+    e.target.style.borderColor = "#2a2f3d";
+    e.target.style.boxShadow = "none";
+    const icon = e.target.previousElementSibling;
+    if (icon) icon.style.color = "hsl(215 20% 45%)";
+  };
+
+  const inputStyle = {
+    height: "48px",
+    backgroundColor: "#1a1e28",
+    border: "1px solid #2a2f3d",
+    color: "#dde3ed",
+    caretColor: "hsl(180 100% 60%)",
+  };
+
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-emerald-50 via-teal-100 to-cyan-200 flex items-center justify-center px-4 py-8">
+    <div
+      className="relative min-h-screen w-full flex flex-col items-center justify-center px-4 py-8 overflow-hidden"
+      style={{ backgroundColor: "#0d0f14" }}
+    >
+      {/* ── ambient glow circles ─────────────────────────── */}
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          top: "-100px",
+          left: "-100px",
+          width: "600px",
+          height: "600px",
+          borderRadius: "50%",
+          background: "hsl(180 100% 40% / 0.06)",
+          filter: "blur(120px)",
+        }}
+      />
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          bottom: "-80px",
+          right: "-80px",
+          width: "500px",
+          height: "500px",
+          borderRadius: "50%",
+          background: "hsl(180 100% 40% / 0.04)",
+          filter: "blur(100px)",
+        }}
+      />
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          width: "800px",
+          height: "800px",
+          borderRadius: "50%",
+          background: "hsl(220 100% 50% / 0.05)",
+          filter: "blur(150px)",
+        }}
+      />
+
+      {/* ── grid overlay ─────────────────────────────────── */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage:
+            "linear-gradient(hsl(180 100% 50% / 0.03) 1px, transparent 1px), linear-gradient(90deg, hsl(180 100% 50% / 0.03) 1px, transparent 1px)",
+          backgroundSize: "60px 60px",
+        }}
+      />
+
+      {/* ── floating dots ────────────────────────────────── */}
+      {DOTS.map((dot, i) => (
+        <motion.div
+          key={i}
+          className="absolute pointer-events-none rounded-full"
+          style={{
+            top: dot.top,
+            left: dot.left,
+            width: "4px",
+            height: "4px",
+            backgroundColor: "hsl(180 100% 60%)",
+          }}
+          animate={{ y: [-20, 20], opacity: [0.2, 0.6, 0.2] }}
+          transition={{
+            duration: 4,
+            repeat: Infinity,
+            repeatType: "mirror",
+            delay: dot.delay,
+            ease: "easeInOut",
+          }}
+        />
+      ))}
+
+      {/* ── Toast ────────────────────────────────────────── */}
       {toast && <Toast message={toast.message} type={toast.type} />}
 
-      <div className="flex flex-col md:flex-row items-center justify-center w-full max-w-4xl px-4">
-        {/* Signup box */}
-        <div className="w-full max-w-sm bg-white/95 backdrop-blur-sm border border-gray-200 p-8 rounded-2xl shadow-xl">
-          <h1
-            className="text-center text-4xl font-bold mb-2 text-emerald-600 italic font-serif"
+      {/* ── Register Card ────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: 20, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="relative w-full max-w-md"
+        style={{
+          background: "rgba(17,20,28,0.9)",
+          backdropFilter: "blur(24px)",
+          WebkitBackdropFilter: "blur(24px)",
+          border: "1px solid hsl(180 100% 50% / 0.15)",
+          borderRadius: "16px",
+          boxShadow:
+            "0 0 40px hsl(180 100% 50% / 0.08), 0 20px 60px hsl(0 0% 0% / 0.5)",
+          padding: "40px 32px 32px",
+        }}
+      >
+        {/* top glow line */}
+        <div
+          className="absolute top-0 left-8 right-8 h-px pointer-events-none"
+          style={{
+            background:
+              "linear-gradient(90deg, transparent, hsl(180 100% 50% / 0.5), transparent)",
+          }}
+        />
+
+        {/* ── Icon + Title ─────────────────────────────── */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+          className="flex flex-col items-center mb-8"
+        >
+          <div
+            className="flex items-center justify-center mb-4"
+            style={{
+              width: "56px",
+              height: "56px",
+              borderRadius: "12px",
+              background: "hsl(180 100% 50% / 0.10)",
+              border: "1px solid hsl(180 100% 50% / 0.20)",
+              boxShadow: "0 0 20px hsl(180 100% 50% / 0.15)",
+            }}
           >
-            CyberScan
+            <Shield size={28} color="hsl(180 100% 60%)" />
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight select-none">
+            <span style={{ color: "#dde3ed" }}>Cyber</span>
+            <span
+              style={{
+                background:
+                  "linear-gradient(135deg, hsl(180 100% 55%), hsl(180 100% 70%))",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}
+            >
+              Scan
+            </span>
           </h1>
-
-          <p className="text-center text-gray-500 text-sm mb-6">
-            Sign up to connect with friends and share moments.
+          <p className="text-sm mt-1" style={{ color: "hsl(215 20% 55%)" }}>
+            Create your account
           </p>
+        </motion.div>
 
-          <form className="space-y-3" onSubmit={handleSubmit}>
-            <input
-              name="email"
-              type="text"
-              value={formData.email}
-              onChange={handleInputChange}
-              placeholder="Email"
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-transparent text-sm transition-all"
-            />
-            <input
-              name="username"
-              type="text"
-              value={formData.username}
-              onChange={handleInputChange}
-              placeholder="Username"
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-transparent text-sm transition-all"
-            />
-            <input
-              name="password"
-              type="password"
-              value={formData.password}
-              onChange={handleInputChange}
-              placeholder="Password"
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-transparent text-sm transition-all"
-            />
+        {/* ── Form ─────────────────────────────────────── */}
+        <form className="space-y-0" onSubmit={handleSubmit}>
+          <motion.div
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+            className="space-y-4 mb-4"
+          >
+            {/* Email */}
+            <div className="relative">
+              <Mail
+                size={16}
+                className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200"
+                style={{ color: "hsl(215 20% 45%)" }}
+              />
+              <input
+                name="email"
+                type="text"
+                value={formData.email}
+                onChange={handleInputChange}
+                placeholder="Email"
+                className="w-full pl-10 pr-4 text-sm rounded-xl transition-all duration-200 outline-none"
+                style={inputStyle}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
+              />
+            </div>
 
+            {/* Username */}
+            <div className="relative">
+              <Shield
+                size={16}
+                className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200"
+                style={{ color: "hsl(215 20% 45%)" }}
+              />
+              <input
+                name="username"
+                type="text"
+                value={formData.username}
+                onChange={handleInputChange}
+                placeholder="Username"
+                className="w-full pl-10 pr-4 text-sm rounded-xl transition-all duration-200 outline-none"
+                style={inputStyle}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
+              />
+            </div>
+
+            {/* Password */}
+            <div className="relative">
+              <Lock
+                size={16}
+                className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none transition-colors duration-200"
+                style={{ color: "hsl(215 20% 45%)" }}
+              />
+              <input
+                name="password"
+                type={showPassword ? "text" : "password"}
+                value={formData.password}
+                onChange={handleInputChange}
+                placeholder="Password"
+                className="w-full pl-10 pr-10 text-sm rounded-xl transition-all duration-200 outline-none"
+                style={inputStyle}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors duration-200"
+                style={{ color: "hsl(215 20% 45%)" }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.color = "hsl(180 100% 60%)")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.color = "hsl(215 20% 45%)")
+                }
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+          </motion.div>
+
+          {/* Submit */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.5 }}
+          >
             <button
               type="submit"
               disabled={isLoading}
-              className={`w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold py-3 rounded-xl text-sm shadow-lg shadow-emerald-200 transition-all duration-300 mt-2 ${
-                isLoading ? "opacity-50 cursor-not-allowed" : ""
-              }`}
+              className="w-full font-semibold text-sm rounded-xl transition-all duration-300"
+              style={{
+                height: "48px",
+                background:
+                  "linear-gradient(135deg, hsl(180 80% 30%), hsl(180 100% 45%))",
+                color: "#0d0f14",
+                boxShadow:
+                  "0 0 20px hsl(180 100% 50% / 0.25), 0 4px 12px hsl(0 0% 0% / 0.3)",
+                opacity: isLoading ? 0.6 : 1,
+                cursor: isLoading ? "not-allowed" : "pointer",
+              }}
+              onMouseEnter={(e) => {
+                if (!isLoading)
+                  e.currentTarget.style.boxShadow =
+                    "0 0 30px hsl(180 100% 50% / 0.4), 0 4px 16px hsl(0 0% 0% / 0.4)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.boxShadow =
+                  "0 0 20px hsl(180 100% 50% / 0.25), 0 4px 12px hsl(0 0% 0% / 0.3)";
+              }}
             >
-              {isLoading ? "Signing Up..." : "Sign Up"}
+              {isLoading ? "Signing Up…" : "Sign Up"}
             </button>
-          </form>
+          </motion.div>
+        </form>
 
-          <div className="flex items-center my-4">
-            <div className="flex-grow h-px bg-gray-300"></div>
-            <span className="px-2 text-gray-500 text-xs font-semibold">OR</span>
-            <div className="flex-grow h-px bg-gray-300"></div>
-          </div>
+        {/* ── OR Divider ─────────────────────────────── */}
+        <div className="flex items-center my-6">
+          <div
+            className="flex-grow h-px"
+            style={{
+              background:
+                "linear-gradient(90deg, transparent, hsl(215 20% 30%))",
+            }}
+          />
+          <span
+            className="px-4 text-xs font-semibold uppercase"
+            style={{ color: "hsl(215 20% 45%)" }}
+          >
+            or
+          </span>
+          <div
+            className="flex-grow h-px"
+            style={{
+              background:
+                "linear-gradient(90deg, hsl(215 20% 30%), transparent)",
+            }}
+          />
+        </div>
 
-          <p className="text-center text-sm mt-4 text-gray-700">
+        {/* Already have account link */}
+        <div className="text-center">
+          <p className="text-sm" style={{ color: "hsl(215 20% 55%)" }}>
             Have an account?{" "}
-            <Link to="/login" className="text-emerald-600 font-semibold hover:text-emerald-700 hover:underline">
+            <Link
+              to="/login"
+              className="font-semibold transition-colors duration-200"
+              style={{ color: "hsl(180 100% 60%)" }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.color = "hsl(180 100% 75%)")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.color = "hsl(180 100% 60%)")
+              }
+            >
               Log in
             </Link>
           </p>
         </div>
-      </div>
+      </motion.div>
+
+      {/* ── Bottom Card ───────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5, duration: 0.5 }}
+        className="w-full max-w-md mt-4"
+        style={{
+          background: "rgba(17,20,28,0.6)",
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
+          border: "1px solid hsl(180 100% 50% / 0.15)",
+          borderRadius: "16px",
+          padding: "20px 32px",
+          textAlign: "center",
+          boxShadow: "0 8px 32px hsl(0 0% 0% / 0.3)",
+        }}
+      >
+        <p className="text-sm" style={{ color: "hsl(215 20% 55%)" }}>
+          Already have an account?{" "}
+          <Link
+            to="/login"
+            className="font-semibold transition-colors duration-200"
+            style={{ color: "hsl(180 100% 60%)" }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.color = "hsl(180 100% 75%)")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.color = "hsl(180 100% 60%)")
+            }
+          >
+            Log in
+          </Link>
+        </p>
+      </motion.div>
     </div>
   );
 }

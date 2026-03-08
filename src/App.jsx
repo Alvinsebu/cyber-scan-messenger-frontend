@@ -7,12 +7,12 @@ import Admin from "./pages/admin";
 
 function App() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <Routes>
         <Route path="/" element={<Navigate to="/login" />} />
-        <Route path="/login" element={<div className="flex items-center justify-center min-h-screen"><Login /></div>} />
-        <Route path="/register" element={<div className="flex items-center justify-center min-h-screen"><Register /></div>} />
-         <Route path="/feeds" element={<Feed />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/feeds" element={<Feed />} />
         <Route path="/admin" element={<Admin />} />
       </Routes>
     </div>

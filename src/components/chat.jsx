@@ -65,7 +65,7 @@ const Chat = ({ user, socket }) => {
   const fetchMessageHistory = async (username) => {
     try {
       const accessToken = user?.access_token || JSON.parse(localStorage.getItem('user') || '{}').access_token;
-      
+
       if (!accessToken) {
         console.error('No access token found - user may not be logged in');
         return;
@@ -88,7 +88,7 @@ const Chat = ({ user, socket }) => {
         const data = await response.json();
         console.log('✅ Fetched message history for', username, ':', data);
         console.log('   Total messages:', data.total || data.messages.length);
-        
+
         if (!data.messages || data.messages.length === 0) {
           console.warn('⚠️ No messages found for', username);
           setConversationMessages(prev => ({
@@ -97,7 +97,7 @@ const Chat = ({ user, socket }) => {
           }));
           return;
         }
-        
+
         const formattedMessages = data.messages.map((msg, idx) => {
           console.log(`   Message ${idx + 1}:`, msg.sender, '->', msg.receiver, ':', msg.message || msg.content);
           return {
@@ -111,9 +111,9 @@ const Chat = ({ user, socket }) => {
             is_read: msg.is_read || false
           };
         });
-        
+
         console.log('✅ Formatted', formattedMessages.length, 'messages for', username);
-        
+
         // Store messages for this specific conversation
         setConversationMessages(prev => ({
           ...prev,
@@ -137,7 +137,7 @@ const Chat = ({ user, socket }) => {
     // Listen for incoming messages
     socket.on('receive_message', (data) => {
       console.log('Received message:', data);
-      
+
       const messageData = {
         id: data.id,
         sender: data.sender,
@@ -233,7 +233,7 @@ const Chat = ({ user, socket }) => {
         const data = await response.json();
         console.log('Can chat status:', data);
         setCanChat(data.can_chat);
-        
+
         if (!data.can_chat) {
           setChatRestriction({
             bullyingCount: data.bullying_count,
@@ -276,7 +276,7 @@ const Chat = ({ user, socket }) => {
       if (response.ok) {
         const data = await response.json();
         console.log('Fetched conversations:', data.conversations);
-        
+
         // Update conversations state with unread counts and last messages
         const conversationsMap = {};
         data.conversations.forEach(conv => {
@@ -298,7 +298,7 @@ const Chat = ({ user, socket }) => {
   const filteredUsers = React.useMemo(() => {
     const searchLower = searchQuery.toLowerCase();
     const usersToFilter = allUsers.length > 0 ? allUsers : onlineUsers;
-    
+
     return usersToFilter
       .filter(userObj => {
         const username = typeof userObj === 'string' ? userObj : userObj.username;
@@ -306,8 +306,8 @@ const Chat = ({ user, socket }) => {
       })
       .map(userObj => {
         const username = typeof userObj === 'string' ? userObj : userObj.username;
-        const isOnline = onlineUsers.includes(username) || 
-                        (typeof userObj === 'object' && userObj.is_online);
+        const isOnline = onlineUsers.includes(username) ||
+          (typeof userObj === 'object' && userObj.is_online);
         return { username, isOnline };
       });
   }, [searchQuery, allUsers, onlineUsers, user]);
@@ -324,7 +324,7 @@ const Chat = ({ user, socket }) => {
     };
 
     socket.emit('send_message', messageData);
-    
+
     // Optimistically add message to UI in conversation-specific state
     setConversationMessages(prev => ({
       ...prev,
@@ -334,7 +334,7 @@ const Chat = ({ user, socket }) => {
         bullying_probability: 0
       }]
     }));
-    
+
     setMessageInput('');
 
     // Stop typing indicator
@@ -352,12 +352,12 @@ const Chat = ({ user, socket }) => {
     console.log('User selected:', username);
     setSelectedUser(username);
     setSearchQuery('');
-    
+
     // Always fetch fresh message history from server
     // This ensures we get the latest messages even after login/refresh
     console.log('Fetching fresh message history for:', username);
     fetchMessageHistory(username);
-    
+
     // Mark conversation as read
     setConversations(prev => ({
       ...prev,
@@ -403,8 +403,15 @@ const Chat = ({ user, socket }) => {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-full shadow-lg transition-all duration-300 hover:scale-110 z-50"
+        className="fixed bottom-6 right-6 p-4 rounded-full z-50 transition-all duration-300 hover:scale-110"
         title="Open Chat"
+        style={{
+          background: "linear-gradient(135deg, hsl(180 80% 25%), hsl(180 100% 40%))",
+          boxShadow: "0 0 24px hsl(180 100% 50% / 0.35), 0 8px 24px hsl(0 0% 0% / 0.5)",
+          color: "#0d0f14",
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "0 0 36px hsl(180 100% 50% / 0.55), 0 8px 24px hsl(0 0% 0% / 0.5)"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "0 0 24px hsl(180 100% 50% / 0.35), 0 8px 24px hsl(0 0% 0% / 0.5)"; }}
       >
         <BsChatDots className="text-2xl" />
       </button>
@@ -412,21 +419,55 @@ const Chat = ({ user, socket }) => {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 w-96 h-[600px] bg-white rounded-lg shadow-2xl flex flex-col z-50 border border-gray-200">
+    <div
+      className="fixed bottom-6 right-6 w-96 h-[600px] rounded-2xl flex flex-col z-50 overflow-hidden"
+      style={{
+        background: "rgba(13,15,20,0.95)",
+        backdropFilter: "blur(24px)",
+        WebkitBackdropFilter: "blur(24px)",
+        border: "1px solid hsl(180 100% 50% / 0.18)",
+        boxShadow: "0 0 40px hsl(180 100% 50% / 0.08), 0 24px 60px hsl(0 0% 0% / 0.6)",
+      }}
+    >
+      {/* Top glow line */}
+      <div
+        className="absolute top-0 left-8 right-8 h-px pointer-events-none"
+        style={{ background: "linear-gradient(90deg, transparent, hsl(180 100% 50% / 0.5), transparent)" }}
+      />
+
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-t-lg flex justify-between items-center">
+      <div
+        className="flex justify-between items-center px-4 py-3 flex-shrink-0"
+        style={{
+          background: "rgba(17,20,28,0.9)",
+          borderBottom: "1px solid hsl(180 100% 50% / 0.12)",
+        }}
+      >
         <div className="flex items-center gap-2">
-          <BsChatDots className="text-xl" />
-          <h3 className="font-semibold text-lg">Messages</h3>
+          <BsChatDots style={{ color: "hsl(180 100% 60%)" }} className="text-xl" />
+          <h3
+            className="font-semibold text-lg tracking-wide"
+            style={{
+              background: "linear-gradient(135deg, hsl(180 100% 55%), hsl(180 100% 70%))",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}
+          >
+            Messages
+          </h3>
         </div>
         <button
           onClick={() => {
             setIsOpen(false);
             setSelectedUser(null);
           }}
-          className="hover:bg-blue-700 p-1 rounded transition-colors"
+          className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200"
+          style={{ color: "hsl(215 20% 55%)", background: "hsl(215 20% 10% / 0.5)", border: "none" }}
+          onMouseEnter={(e) => { e.currentTarget.style.color = "hsl(0 80% 65%)"; e.currentTarget.style.background = "hsl(0 80% 50% / 0.15)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = "hsl(215 20% 55%)"; e.currentTarget.style.background = "hsl(215 20% 10% / 0.5)"; }}
         >
-          <IoClose className="text-2xl" />
+          <IoClose className="text-xl" />
         </button>
       </div>
 
@@ -434,15 +475,35 @@ const Chat = ({ user, socket }) => {
         // User List View
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Search Box */}
-          <div className="p-4 border-b border-gray-200">
+          <div
+            className="p-3 flex-shrink-0"
+            style={{ borderBottom: "1px solid hsl(180 100% 50% / 0.08)" }}
+          >
             <div className="relative">
-              <IoSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <IoSearch
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-sm"
+                style={{ color: "hsl(180 100% 50% / 0.5)" }}
+              />
               <input
                 type="text"
                 placeholder="Search users..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                className="w-full pl-9 pr-4 py-2 text-sm rounded-xl outline-none transition-all duration-200"
+                style={{
+                  background: "#1a1e28",
+                  border: "1px solid #2a2f3d",
+                  color: "#dde3ed",
+                  caretColor: "hsl(180 100% 60%)",
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = "hsl(180 100% 50% / 0.5)";
+                  e.target.style.boxShadow = "0 0 0 2px hsl(180 100% 50% / 0.1)";
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = "#2a2f3d";
+                  e.target.style.boxShadow = "none";
+                }}
               />
             </div>
           </div>
@@ -456,22 +517,42 @@ const Chat = ({ user, socket }) => {
                   <div
                     key={idx}
                     onClick={() => handleUserSelect(userObj.username)}
-                    className="flex items-center gap-3 p-4 hover:bg-gray-50 cursor-pointer border-b border-gray-100 transition-colors"
+                    className="flex items-center gap-3 px-4 py-3 cursor-pointer transition-all duration-150"
+                    style={{ borderBottom: "1px solid hsl(180 100% 50% / 0.06)" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "hsl(180 100% 50% / 0.05)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                   >
-                    <div className="relative">
-                      <FaUserCircle className="text-4xl text-gray-400" />
+                    <div className="relative flex-shrink-0">
+                      <FaUserCircle className="text-4xl" style={{ color: "hsl(180 100% 40% / 0.6)" }} />
                       {userObj.isOnline && (
-                        <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
+                        <span
+                          className="absolute bottom-0 right-0 w-3 h-3 rounded-full"
+                          style={{
+                            background: "hsl(145 80% 50%)",
+                            border: "2px solid #0d0f14",
+                            boxShadow: "0 0 6px hsl(145 80% 50% / 0.6)",
+                          }}
+                        />
                       )}
                     </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-800">{userObj.username}</p>
-                      <p className={`text-xs ${userObj.isOnline ? 'text-green-500' : 'text-gray-400'}`}>
-                        {userObj.isOnline ? 'Online' : 'Offline'}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate" style={{ color: "#dde3ed" }}>{userObj.username}</p>
+                      <p
+                        className="text-xs"
+                        style={{ color: userObj.isOnline ? "hsl(145 80% 55%)" : "hsl(215 20% 40%)" }}
+                      >
+                        {userObj.isOnline ? '● Online' : '○ Offline'}
                       </p>
                     </div>
                     {unreadCount > 0 && (
-                      <span className="bg-blue-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                      <span
+                        className="text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center flex-shrink-0"
+                        style={{
+                          background: "hsl(180 100% 40%)",
+                          color: "#0d0f14",
+                          boxShadow: "0 0 8px hsl(180 100% 50% / 0.4)",
+                        }}
+                      >
                         {unreadCount}
                       </span>
                     )}
@@ -479,9 +560,9 @@ const Chat = ({ user, socket }) => {
                 );
               })
             ) : (
-              <div className="flex flex-col items-center justify-center h-full text-gray-400 p-8">
-                <BsChatDots className="text-5xl mb-3" />
-                <p className="text-sm text-center">
+              <div className="flex flex-col items-center justify-center h-full p-8">
+                <BsChatDots className="text-5xl mb-3" style={{ color: "hsl(215 20% 25%)" }} />
+                <p className="text-sm text-center" style={{ color: "hsl(215 20% 40%)" }}>
                   {searchQuery ? 'No users found' : 'No users available'}
                 </p>
               </div>
@@ -491,28 +572,40 @@ const Chat = ({ user, socket }) => {
       ) : (
         // Chat View
         <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Chat Header */}
-          <div className="p-3 border-b border-gray-200 flex items-center gap-3">
+          {/* Chat Sub-Header */}
+          <div
+            className="px-3 py-2.5 flex items-center gap-3 flex-shrink-0"
+            style={{ borderBottom: "1px solid hsl(180 100% 50% / 0.10)", background: "rgba(17,20,28,0.6)" }}
+          >
             <button
               onClick={() => setSelectedUser(null)}
-              className="text-gray-600 hover:text-gray-800"
+              className="flex items-center justify-center w-7 h-7 rounded-lg text-sm font-bold transition-all duration-200"
+              style={{ color: "hsl(180 100% 60%)", background: "hsl(180 100% 50% / 0.08)", border: "none" }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "hsl(180 100% 50% / 0.18)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "hsl(180 100% 50% / 0.08)"; }}
             >
               ←
             </button>
-            <FaUserCircle className="text-3xl text-gray-400" />
-            <div className="flex-1">
-              <p className="font-medium text-gray-800">{selectedUser}</p>
-              <p className="text-xs text-green-500">
-                {onlineUsers.includes(selectedUser) ? 'Online' : 'Offline'}
+            <FaUserCircle className="text-3xl flex-shrink-0" style={{ color: "hsl(180 100% 40% / 0.7)" }} />
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-sm truncate" style={{ color: "#dde3ed" }}>{selectedUser}</p>
+              <p
+                className="text-xs"
+                style={{ color: onlineUsers.includes(selectedUser) ? "hsl(145 80% 55%)" : "hsl(215 20% 40%)" }}
+              >
+                {onlineUsers.includes(selectedUser) ? '● Online' : '○ Offline'}
               </p>
             </div>
           </div>
 
           {/* Messages Container */}
-          <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+          <div
+            className="flex-1 overflow-y-auto p-4 space-y-1"
+            style={{ background: "rgba(10,12,18,0.5)" }}
+          >
             {messages.length === 0 ? (
               <div className="flex items-center justify-center h-full">
-                <p className="text-gray-400 text-sm">No messages yet. Start the conversation!</p>
+                <p className="text-sm" style={{ color: "hsl(215 20% 35%)" }}>No messages yet. Start the conversation!</p>
               </div>
             ) : (
               messages.map((msg, idx) => {
@@ -522,28 +615,51 @@ const Chat = ({ user, socket }) => {
 
                 return (
                   <div key={msg.id || idx}>
-                    <div className={`mb-3 flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`mb-2 flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
                       <div
-                        className={`max-w-[75%] rounded-lg px-4 py-2 ${
+                        className="max-w-[75%] rounded-2xl px-4 py-2"
+                        style={
                           isOwn
-                            ? 'bg-blue-500 text-white rounded-br-none'
-                            : 'bg-white text-gray-800 rounded-bl-none shadow-sm'
-                        }`}
+                            ? {
+                              background: "linear-gradient(135deg, hsl(180 80% 28%), hsl(180 100% 42%))",
+                              color: "#0d0f14",
+                              borderBottomRightRadius: "4px",
+                              boxShadow: "0 0 12px hsl(180 100% 50% / 0.2)",
+                            }
+                            : {
+                              background: "rgba(26,30,40,0.9)",
+                              color: "#dde3ed",
+                              border: "1px solid hsl(180 100% 50% / 0.10)",
+                              borderBottomLeftRadius: "4px",
+                            }
+                        }
                       >
-                        <p className="text-sm break-words">
-                          {isBullying ? (
-  <div className="bg-red-50 border border-red-300 text-red-700 text-sm px-3 py-2 rounded-lg flex items-center gap-2 max-w-xs">
-    <span>⚠️</span>
-    <span>This message was removed because it violates community guidelines.</span>
-  </div>
-) : (
-  <p className="text-sm break-words">{msg.message}</p>
-)}
-                        </p>
-                        <p className={`text-xs mt-1 ${isOwn ? 'text-blue-100' : 'text-gray-400'}`}>
-                          {new Date(msg.timestamp).toLocaleTimeString([], { 
-                            hour: '2-digit', 
-                            minute: '2-digit' 
+                        {isBullying ? (
+                          <div
+                            className="flex items-center gap-2 rounded-lg px-3 py-2"
+                            style={{
+                              background: "hsl(0 70% 15% / 0.6)",
+                              border: "1px solid hsl(0 80% 40% / 0.35)",
+                            }}
+                          >
+                            <span style={{ fontSize: "15px", lineHeight: 1 }}>⚠️</span>
+                            <span
+                              className="text-xs leading-snug"
+                              style={{ color: "hsl(0 70% 70%)" }}
+                            >
+                              Removed · violates community guidelines
+                            </span>
+                          </div>
+                        ) : (
+                          <p className="text-sm break-words">{msg.message}</p>
+                        )}
+                        <p
+                          className="text-xs mt-1"
+                          style={{ color: isOwn ? "hsl(180 60% 25%)" : "hsl(215 20% 40%)" }}
+                        >
+                          {new Date(msg.timestamp).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit'
                           })}
                         </p>
                       </div>
@@ -552,32 +668,53 @@ const Chat = ({ user, socket }) => {
                 );
               })
             )}
-            
+
             {/* Typing Indicator */}
             {typingUsers[selectedUser] && (
-              <div className="flex justify-start mb-3">
-                <div className="bg-gray-200 rounded-lg px-4 py-2">
-                  <p className="text-sm text-gray-600 italic">{selectedUser} is typing...</p>
+              <div className="flex justify-start mb-2">
+                <div
+                  className="rounded-2xl px-4 py-2"
+                  style={{
+                    background: "rgba(26,30,40,0.9)",
+                    border: "1px solid hsl(180 100% 50% / 0.10)",
+                    borderBottomLeftRadius: "4px",
+                  }}
+                >
+                  <p className="text-xs italic" style={{ color: "hsl(180 100% 60%)" }}>
+                    {selectedUser} is typing…
+                  </p>
                 </div>
               </div>
             )}
-            
+
             <div ref={messagesEndRef} />
           </div>
 
           {/* Message Input */}
-          <div className="p-4 border-t border-gray-200 bg-white">
+          <div
+            className="p-3 flex-shrink-0"
+            style={{
+              borderTop: "1px solid hsl(180 100% 50% / 0.10)",
+              background: "rgba(17,20,28,0.85)",
+            }}
+          >
             {!canChat && chatRestriction ? (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                <p className="text-red-700 text-sm font-semibold flex items-center gap-2">
-                  <IoWarning className="text-red-500" />
+              <div
+                className="rounded-xl p-3"
+                style={{
+                  background: "hsl(0 80% 50% / 0.08)",
+                  border: "1px solid hsl(0 80% 50% / 0.3)",
+                }}
+              >
+                <p className="text-sm font-semibold flex items-center gap-2" style={{ color: "hsl(0 80% 70%)" }}>
+                  <IoWarning />
                   You are blocked from sending messages
                 </p>
-                <p className="text-red-600 text-xs mt-1">
+                <p className="text-xs mt-1" style={{ color: "hsl(0 80% 60%)" }}>
                   Bullying detected: {chatRestriction.bullyingCount}/{chatRestriction.maxAllowed} messages
                 </p>
                 {chatRestriction.message && (
-                  <p className="text-red-600 text-xs mt-1">{chatRestriction.message}</p>
+                  <p className="text-xs mt-1" style={{ color: "hsl(0 80% 60%)" }}>{chatRestriction.message}</p>
                 )}
               </div>
             ) : (
@@ -586,16 +723,46 @@ const Chat = ({ user, socket }) => {
                   type="text"
                   value={messageInput}
                   onChange={handleTyping}
-                  placeholder={canChat ? "Type a message..." : "Chat disabled due to bullying behavior"}
+                  placeholder={canChat ? "Type a message…" : "Chat disabled due to bullying behavior"}
                   disabled={!canChat}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-2 text-sm rounded-xl outline-none transition-all duration-200"
+                  style={{
+                    background: "#1a1e28",
+                    border: "1px solid #2a2f3d",
+                    color: "#dde3ed",
+                    caretColor: "hsl(180 100% 60%)",
+                    opacity: !canChat ? 0.5 : 1,
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = "hsl(180 100% 50% / 0.5)";
+                    e.target.style.boxShadow = "0 0 0 2px hsl(180 100% 50% / 0.1)";
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = "#2a2f3d";
+                    e.target.style.boxShadow = "none";
+                  }}
                 />
                 <button
                   type="submit"
                   disabled={!messageInput.trim() || !canChat}
-                  className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 py-2 rounded-full transition-colors"
+                  className="flex items-center justify-center w-10 h-10 rounded-xl flex-shrink-0 transition-all duration-200"
+                  style={{
+                    background: !messageInput.trim() || !canChat
+                      ? "hsl(215 20% 15%)"
+                      : "linear-gradient(135deg, hsl(180 80% 28%), hsl(180 100% 42%))",
+                    color: !messageInput.trim() || !canChat ? "hsl(215 20% 35%)" : "#0d0f14",
+                    border: "none",
+                    cursor: !messageInput.trim() || !canChat ? "not-allowed" : "pointer",
+                    boxShadow: !messageInput.trim() || !canChat ? "none" : "0 0 12px hsl(180 100% 50% / 0.25)",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (messageInput.trim() && canChat) e.currentTarget.style.boxShadow = "0 0 20px hsl(180 100% 50% / 0.45)";
+                  }}
+                  onMouseLeave={(e) => {
+                    if (messageInput.trim() && canChat) e.currentTarget.style.boxShadow = "0 0 12px hsl(180 100% 50% / 0.25)";
+                  }}
                 >
-                  <IoSend className="text-lg" />
+                  <IoSend className="text-base" />
                 </button>
               </form>
             )}
